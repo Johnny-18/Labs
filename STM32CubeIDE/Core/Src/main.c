@@ -55,7 +55,11 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+struct Led
+{
+	GPIO_TypeDef *GPIOx;
+	uint16_t pin;
+};
 /* USER CODE END 0 */
 
 /**
@@ -93,20 +97,102 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  const int LED_COUNT = 4;
+  struct Led LEDS[LED_COUNT];
+
+  LEDS[0].GPIOx = LED1_GPIO_Port;
+  LEDS[0].pin = LED1_Pin;
+  LEDS[1].GPIOx = LED2_GPIO_Port;
+  LEDS[1].pin = LED2_Pin;
+  LEDS[2].GPIOx = LED3_GPIO_Port;
+  LEDS[2].pin = LED3_Pin;
+  LEDS[3].GPIOx = LED4_GPIO_Port;
+  LEDS[3].pin = LED4_Pin;
+
+  int mode = 0;
+  int onPress = -1;
   while (1)
   {
-	HAL_GPIO_WritePin (LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
-	HAL_Delay (250);
-	HAL_GPIO_WritePin (LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin (LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
-	HAL_Delay (250);
-	HAL_GPIO_WritePin (LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin (LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
-	HAL_Delay (250);
-	HAL_GPIO_WritePin (LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin (LED4_GPIO_Port, LED4_Pin, GPIO_PIN_SET);
-	HAL_Delay (250);
-	HAL_GPIO_WritePin (LED4_GPIO_Port, LED4_Pin, GPIO_PIN_RESET);
+	  int newMode = 0;
+	  if (HAL_GPIO_ReadPin (BUTTON1_GPIO_Port, BUTTON1_Pin) == GPIO_PIN_SET)
+	  {
+		  newMode = 1;
+		  if (onPress < 0)
+		  {
+			  onPress = 1;
+		  }
+	  } else if (HAL_GPIO_ReadPin (BUTTON2_GPIO_Port, BUTTON2_Pin) == GPIO_PIN_SET)
+	  {
+		  newMode = 2;
+		  if (onPress < 0)
+		  {
+			  onPress = 1;
+		  }
+	  }
+
+	  if (!newMode)
+	  {
+		  onPress = -1;
+	  }
+
+	  if ((newMode) && (mode != newMode))
+	  {
+		  for (int i = 0; i < LED_COUNT; i++)
+		  {
+			  struct Led led = LEDS[i];
+			  HAL_GPIO_WritePin (led.GPIOx, led.pin, GPIO_PIN_RESET);
+		  }
+
+		  mode = newMode;
+	  }
+
+	  if (onPress == 1)
+	  {
+		  if (mode == 1)
+		  {
+			  for (int i = 0, found = 0; ; i++)
+			  {
+				  struct Led led = LEDS[i % LED_COUNT];
+
+				  if (found)
+				  {
+					  HAL_GPIO_WritePin (led.GPIOx, led.pin, GPIO_PIN_SET);
+					  break;
+				  }
+
+				  if ((HAL_GPIO_ReadPin (led.GPIOx, led.pin) == GPIO_PIN_SET) || (i == LED_COUNT - 1))
+				  {
+					  HAL_GPIO_WritePin (led.GPIOx, led.pin, GPIO_PIN_RESET);
+					  found = 1;
+				  }
+			  }
+		  } else if (mode == 2)
+		  {
+			  int changed = 0;
+			  for (int i = 0; i < LED_COUNT; i++)
+			  {
+				  struct Led led = LEDS[i % LED_COUNT];
+
+				  if (HAL_GPIO_ReadPin (led.GPIOx, led.pin) == GPIO_PIN_RESET)
+				  {
+					  HAL_GPIO_WritePin (led.GPIOx, led.pin, GPIO_PIN_SET);
+					  changed = 1;
+					  break;
+				  }
+			  }
+
+			  if (!changed)
+			  {
+				  for (int i = 0; i < LED_COUNT; i++)
+				  {
+					  struct Led led = LEDS[i];
+					  HAL_GPIO_WritePin (led.GPIOx, led.pin, GPIO_PIN_RESET);
+				  }
+			  }
+		  }
+
+		  onPress = 0;
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

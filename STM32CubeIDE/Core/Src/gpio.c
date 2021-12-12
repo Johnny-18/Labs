@@ -54,6 +54,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED4_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PAPin PAPin */
+  GPIO_InitStruct.Pin = BUTTON1_Pin|BUTTON2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pins : PAPin PAPin PAPin */
   GPIO_InitStruct.Pin = LED1_Pin|LED2_Pin|LED3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
